@@ -395,24 +395,42 @@ function showConfirm(){
     ${cards}
     <div class="foot">
       <button class="btn btn-ghost" onclick="${events.length>1?'showPicker()':'showUpload()'}"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>Back</button>
-      <button class="btn btn-acc" id="add-btn" onclick="addAll()">
-        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="14" x2="12" y2="18"/><line x1="10" y1="16" x2="14" y2="16"/></svg>
+      <button class="btn btn-acc" id="add-btn" onclick="addAll('google')">
+        <svg viewBox="0 0 24 24">...</svg>
         Add to Google Calendar
+      </button>
+      <button class="btn btn-ghost" id="add-btn-apple" onclick="addAll('apple')">
+        Add to Apple Calendar
       </button>
     </div>
   </div>`;
 }
 
-function addAll(){
-  const btn=document.getElementById('add-btn');
-  btn.disabled=true;
-  btn.innerHTML=`<div class="spinner sm"></div> Adding…`;
+function addAll(type){
   const selArr=[...selected];const added=[];
   selArr.forEach(idx=>{
     const ev={title:document.getElementById('t'+idx).value,date:document.getElementById('d'+idx).value,start:document.getElementById('s'+idx).value,end:document.getElementById('e'+idx).value,location:document.getElementById('l'+idx).value,description:document.getElementById('desc'+idx).value,tz:document.getElementById('z'+idx).value};
-    window.open(gcalUrl(ev),'_blank');added.push(ev);
+    if(type==='google'){
+      window.open(gcalUrl(ev),'_blank');
+    } else {
+      downloadIcs(ev);
+    }
+    added.push(ev);
   });
   setTimeout(()=>showSuccess(added),500);
+}
+
+function downloadIcs(ev){
+  const[y,m,d]=(ev.date||'2026-01-01').split('-');
+  const[sh,sm]=(ev.start||'09:00').split(':');
+  const[eh,em]=(ev.end||'10:00').split(':');
+  const fmt=(Y,M,D,h,min)=>`${Y}${M}${D}T${h}${min}00`;
+  const ics=`BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:${ev.title}\nDTSTART;TZID=${ev.tz}:${fmt(y,m,d,sh,sm)}\nDTEND;TZID=${ev.tz}:${fmt(y,m,d,eh,em)}\nLOCATION:${ev.location}\nDESCRIPTION:${ev.description}\nEND:VEVENT\nEND:VCALENDAR`;
+  const blob=new Blob([ics],{type:'text/calendar'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`${ev.title||'event'}.ics`;
+  a.click();
 }
 
 function gcalUrl(ev){
