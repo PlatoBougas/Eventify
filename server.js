@@ -45,7 +45,7 @@ app.post('/api/analyze', async (req, res) => {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 1200,
         system: `Extract event details from images/documents. Return ONLY raw JSON — no markdown fences, no explanation.
 
